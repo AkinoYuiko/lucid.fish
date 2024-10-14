@@ -1,4 +1,5 @@
 # Default appearance options. Override in config.fish if you want.
+set -g fish_greeting
 if ! set -q lucid_dirty_indicator
     set -g lucid_dirty_indicator "•"
 end
@@ -217,7 +218,7 @@ function fish_prompt
     if test $cwd != '~'; or test -n "$lucid_git_status_in_home_directory"
         set -l git_state (__lucid_git_status)
         if test $status -eq 0
-            echo -sn " on $git_state"
+            echo -sn " $git_state"
         end
     end
 
