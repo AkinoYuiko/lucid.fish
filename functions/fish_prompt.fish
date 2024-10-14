@@ -1,5 +1,5 @@
 # Default appearance options. Override in config.fish if you want.
-set -g fish_greeting
+set -U fish_greeting
 if ! set -q lucid_dirty_indicator
     set -g lucid_dirty_indicator "•"
 end
