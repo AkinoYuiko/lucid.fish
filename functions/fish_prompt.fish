@@ -87,11 +87,11 @@ function __lucid_git_status
         # TODO: add bisect
         set -l action ""
         if test -f "$git_dir/MERGE_HEAD"
-            set action "merge"
+            set action merge
         else if test -d "$git_dir/rebase-merge"
-            set action "rebase"
+            set action rebase
         else if test -d "$git_dir/rebase-apply"
-            set action "rebase"
+            set action rebase
         end
 
         set -l state $position
@@ -180,18 +180,18 @@ function __lucid_git_status
 end
 
 function __lucid_vi_indicator
-    if [ $fish_key_bindings = "fish_vi_key_bindings" ]
+    if [ $fish_key_bindings = fish_vi_key_bindings ]
         switch $fish_bind_mode
-            case "insert"
+            case insert
                 set_color green
                 echo -n "[I] "
-            case "default"
+            case default
                 set_color red
                 echo -n "[N] "
-            case "visual"
+            case visual
                 set_color yellow
                 echo -n "[S] "
-            case "replace"
+            case replace
                 set_color blue
                 echo -n "[R] "
         end
@@ -207,36 +207,58 @@ function fish_prompt
     set -l last_pipestatus $pipestatus
     set -l cwd (pwd | string replace "$HOME" '~')
 
-    if test -z "$lucid_skip_newline"
+    # Check if this is a final rendering (transient prompt)
+    if contains -- --final-rendering $argv
+        # Simplified transient prompt
+        __lucid_vi_indicator
+
+        set -l prompt_symbol "$lucid_prompt_symbol"
+        set -l prompt_symbol_color "$lucid_prompt_symbol_color"
+
+        for status_code in $last_pipestatus
+            if test "$status_code" -ne 0
+                set prompt_symbol "$lucid_prompt_symbol_error"
+                set prompt_symbol_color "$lucid_prompt_symbol_error_color"
+                break
+            end
+        end
+
+        set_color "$prompt_symbol_color"
+        echo -n "$prompt_symbol "
+        set_color normal
+    else
+        # Full prompt for initial display
+        if test -z "$lucid_skip_newline"
+            echo ''
+        end
+
+        set_color $lucid_cwd_color
+        echo -sn $cwd
+        set_color normal
+
+        if test $cwd != '~'; or test -n "$lucid_git_status_in_home_directory"
+            set -l git_state (__lucid_git_status)
+            if test $status -eq 0
+                echo -sn " $git_state"
+            end
+        end
+
         echo ''
-    end
+        __lucid_vi_indicator
 
-    set_color $lucid_cwd_color
-    echo -sn $cwd
-    set_color normal
+        set -l prompt_symbol "$lucid_prompt_symbol"
+        set -l prompt_symbol_color "$lucid_prompt_symbol_color"
 
-    if test $cwd != '~'; or test -n "$lucid_git_status_in_home_directory"
-        set -l git_state (__lucid_git_status)
-        if test $status -eq 0
-            echo -sn " $git_state"
+        for status_code in $last_pipestatus
+            if test "$status_code" -ne 0
+                set prompt_symbol "$lucid_prompt_symbol_error"
+                set prompt_symbol_color "$lucid_prompt_symbol_error_color"
+                break
+            end
         end
+
+        set_color "$prompt_symbol_color"
+        echo -n "$prompt_symbol "
+        set_color normal
     end
-
-    echo ''
-    __lucid_vi_indicator
-
-    set -l prompt_symbol "$lucid_prompt_symbol"
-    set -l prompt_symbol_color "$lucid_prompt_symbol_color"
-
-    for status_code in $last_pipestatus
-        if test "$status_code" -ne 0
-            set prompt_symbol "$lucid_prompt_symbol_error"
-            set prompt_symbol_color "$lucid_prompt_symbol_error_color"
-            break
-        end
-    end
-
-    set_color "$prompt_symbol_color"
-    echo -n "$prompt_symbol "
-    set_color normal
 end
